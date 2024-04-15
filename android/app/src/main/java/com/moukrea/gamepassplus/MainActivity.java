@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return null; // Default or error handling
     }
-    
+
     /**
      * Loads Game Pass into WebView
      * Injects custom scripts and Better xCloud
@@ -321,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                if (MainActivity.this.useBetterXcloud) { // Use the class field here
+                if (MainActivity.this.useBetterXcloud) {
                     injectScript(view);
                 }
             }
@@ -481,16 +481,19 @@ public class MainActivity extends AppCompatActivity {
             File scriptFile = new File(getFilesDir(), "better-xcloud.user.js");
             InputStream inputStream = new FileInputStream(scriptFile);
             byte[] buffer = new byte[inputStream.available()];
+            inputStream.read(buffer);
             inputStream.close();
             String encoded = Base64.encodeToString(buffer, Base64.NO_WRAP);
 
-            // JavaScript to ensure the script runs as early as possible
             String script = "if (document.readyState === 'loading') {" +
                     "var script = document.createElement('script');" +
                     "script.type = 'text/javascript';" +
                     // Decode and set the script content
                     "script.text = decodeURIComponent(escape(window.atob('" + encoded + "')));" +
                     "document.documentElement.appendChild(script);" +
+                    "} else {" +
+                    // If the page is not in 'loading', force a reload
+                    "window.location.reload();" +
                     "}";
             webView.evaluateJavascript(script, null);
         } catch (Exception e) {
