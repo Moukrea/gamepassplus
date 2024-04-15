@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Game Pass Plus</string>
+    <string name="no_network_access">Aucun accès réseau</string>
+    <string name="retry">Réessayer</string>
+    <string name="exit">Quitter</string>
+    <string name="quit_app">Voulez-vous quitter l\'application ?</string>
+    <string name="yes_quit">Oui, quitter</string>
+    <string name="no_stay">Non, rester</string>
+    <string name="error_occurred">Une erreur s\'est produite</string>
+    <string name="acknowledgements">Remerciements</string>
+    <string name="agreed_thanks">D\'accord, merci !</string>
+    <string name="credits">Game Pass Plus est développé de manière indépendante et n\'est pas affilié, autorisé, endossé ou licencié par Microsoft Corporation. «Xbox», «Game Pass» et toutes les marques associées sont des marques déposées de Microsoft Corporation. Cette application utilise et améliore le service en intégrant des scripts de Better xCloud, un projet indépendant visant à améliorer l\'expérience utilisateur de la version web de Game Pass. Le code source de Better xCloud n\'est pas inclus dans cette application mais est téléchargé au moment de l\'exécution.\n\nNous reconnaissons et apprécions le travail acharné de Microsoft Corporation pour avoir fourni le service Game Pass et les créateurs derrière Better xCloud pour leur contribution innovante à améliorer l\'expérience. Tous les droits et crédits pour les services respectifs et les améliorations vont à leurs légitimes propriétaires.\n\nEn poursuivant, vous reconnaissez les déclarations ci-dessus et les attributions de crédit. Cette application est destinée à un usage personnel et vise à respecter les droits et contributions de toutes les parties impliquées.</string>
+    <string name="installation">Installation</string>
+    <string name="download_betterxcloud">Téléchargement de Better xCloud…</string>
+    <string name="download_error">Une erreur s\'est produite pendant le téléchargement de Better xCloud</string>
+    <string name="go_without_betterxcloud">Continuer sans Better xCloud</string>
+</resources>

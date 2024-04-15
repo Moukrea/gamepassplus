@@ -1,0 +1,41 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.GamePassPlus" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/gray</item>
+        <item name="android:navigationBarColor">@color/gray</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">true</item>
+    </style>
+
+    <style name="DefaultButton" parent="Widget.AppCompat.Button">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">@drawable/default_button</item>
+    </style>
+
+    <style name="ThemeOverlay.App.PrimaryButton" parent="">
+        <item name="buttonDefault">@color/primary</item>
+        <item name="buttonFocused">@color/primary_focused</item>
+        <item name="buttonPressed">@color/primary_pressed</item>
+    </style>
+
+    <style name="FullScreenDialog" parent="Theme.AppCompat.Dialog">
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
+    <style name="Theme.GamePassPlus" parent="Base.Theme.GamePassPlus" >
+        <item name="buttonStyle">@style/DefaultButton</item>
+        <item name="materialButtonStyle">@style/DefaultButton</item>
+        <item name="buttonDefault">@color/secondary</item>
+        <item name="buttonFocused">@color/secondary_focused</item>
+        <item name="buttonPressed">@color/secondary_pressed</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">true</item>
+    </style>
+</resources>

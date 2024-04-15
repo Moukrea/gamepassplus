@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Game Pass Plus</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="no_network_access">No network access</string>
+    <string name="retry">Retry</string>
+    <string name="exit">Exit</string>
+    <string name="quit_app">Do you want to leave the app?</string>
+    <string name="yes_quit">Yes, quit</string>
+    <string name="no_stay">No, stay</string>
+    <string name="acknowledgements">Acknowledgements</string>
+    <string name="credits">Game Pass Plus is independently developed and is not affiliated with, authorized, endorsed, or licensed by Microsoft Corporation. \"Xbox,\" \"Game Pass,\" and all related brand are trademarks of Microsoft Corporation. This application utilizes and improves upon the service by integrating scripts from Better xCloud, an independent project aimed at enhancing the user experience of the Game Pass web version. Better xCloud source code is not included in this app but downloaded at runtime.\n\nWe acknowledge and appreciate the hard work of the Microsoft Corporation for providing the Game Pass service and the creators behind Better xCloud for their innovative contribution to enhance the experience. All rights and credits for the respective services and improvements go to their rightful owners.\n\nBy proceeding, you acknowledge the above statements and credit attributions. This application is intended for personal use and aims to respect the rights and contributions of all parties involved.</string>
+    <string name="agreed_thanks">Agreed, thanks!</string>
+    <string name="installation">Installation</string>
+    <string name="download_betterxcloud">Downloading Better xCloud…</string>
+    <string name="download_error">Something wrong occurred while downloading Better xCloud</string>
+    <string name="go_without_betterxcloud">Continue without Better xCloud</string>
+</resources>
