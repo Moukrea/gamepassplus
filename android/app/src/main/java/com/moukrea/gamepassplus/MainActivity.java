@@ -25,11 +25,14 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
+
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,16 +43,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Scanner;
-
-import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
     private WebView GamePassWebView;
     private Dialog promptDialog;
     private boolean useBetterXcloud = false;
+    private boolean firstInjection = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -311,22 +314,71 @@ public class MainActivity extends AppCompatActivity {
         GamePassWebView.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.gray));
 
         GamePassWebView.setWebViewClient(new WebViewClient() {
-            // shouldOverrideUrlLoading is deprecated
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
-            }
-
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 if (MainActivity.this.useBetterXcloud) {
                     injectScript(view);
+                    if (!MainActivity.this.firstInjection) {
+                        Toast.makeText(MainActivity.this, getString(R.string.betterxcloud_injection_retry), Toast.LENGTH_SHORT).show();
+                    } else {
+                        MainActivity.this.firstInjection = false;
+                    }
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+
+                if (MainActivity.this.useBetterXcloud) {
+                    String checkScript = "if (document.getElementsByClassName('bx-toast').length == 0 " +
+                            "&& !document.querySelector('a[href*=\"/auth/msa?action=logIn\"]')" +
+                            "&& !window.location.pathname.includes('/auth/msa')" +
+                            "&& !window.location.search.includes('loggedIn')) {" +
+                            "   window.location.reload();" +
+                            "}";
+                    view.evaluateJavascript(checkScript, null);
                 }
             }
         });
     }
+
+    private void injectScript(WebView webView) {
+        try {
+            File scriptFile = new File(getFilesDir(), "better-xcloud.user.js");
+            if (!scriptFile.exists()) {
+                Toast.makeText(MainActivity.this, getString(R.string.betterxcloud_not_installed), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            InputStream inputStream = new FileInputStream(scriptFile);
+            byte[] buffer = new byte[inputStream.available()];
+            inputStream.read(buffer);
+            String scriptContent = new String(buffer, StandardCharsets.UTF_8);
+            inputStream.close();
+
+            String encodedScript = Base64.encodeToString(scriptContent.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+
+            String script = "if (document.readyState === 'loading') {" +
+                    "    var parent = document.getElementsByTagName('head').item(0);" +
+                    "    var script = document.createElement('script');" +
+                    "    script.type = 'text/javascript';" +
+                    "    script.innerHTML = decodeURIComponent(escape(window.atob('" + encodedScript + "')));" +
+                    "    parent.appendChild(script);" +
+                    "} else {" +
+                    "    if (!window.location.pathname.includes('/auth/msa') && !window.location.search.includes('loggedIn')) {" +
+                    "        window.location.reload();" +
+                    "    }" +
+                    "}";
+
+            webView.evaluateJavascript(script, null);
+        } catch (Exception e) {
+            Toast.makeText(MainActivity.this, getString(R.string.betterxcloud_injection_error), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 
     /**
      * Utility function to check if network is available
@@ -345,15 +397,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Utility function to dismiss dialogs based on the common Dialog template
-     */
-    private void dismissDialog() {
-        if (promptDialog != null && promptDialog.isShowing()) {
-            promptDialog.dismiss();
-        }
-    }
-
-    /**
      * Allows Game Pass to be browsed with back button
      * Deprecated method
      */
@@ -369,7 +412,6 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Ensure UI Flags are consistent
      * @param hasFocus Whether the window of this activity has focus.
-     *
      */
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -383,25 +425,6 @@ public class MainActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_IMMERSIVE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }
-    }
-
-    /**
-     * Overrides onConfigurationChanged to adjust dialogs if necessary
-     * @param newConfig The new device configuration.
-     */
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ||
-                newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-
-            // Call your method to adjust the layout
-            if (promptDialog != null && promptDialog.isShowing()) {
-                adjustScrollConstraintHeight();
-            }
         }
     }
 
@@ -476,28 +499,31 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void injectScript(WebView webView) {
-        try {
-            File scriptFile = new File(getFilesDir(), "better-xcloud.user.js");
-            InputStream inputStream = new FileInputStream(scriptFile);
-            byte[] buffer = new byte[inputStream.available()];
-            inputStream.read(buffer);
-            inputStream.close();
-            String encoded = Base64.encodeToString(buffer, Base64.NO_WRAP);
+    /**
+     * Utility function to dismiss dialogs based on the common Dialog template
+     */
+    private void dismissDialog() {
+        if (promptDialog != null && promptDialog.isShowing()) {
+            promptDialog.dismiss();
+        }
+    }
 
-            String script = "if (document.readyState === 'loading') {" +
-                    "var script = document.createElement('script');" +
-                    "script.type = 'text/javascript';" +
-                    // Decode and set the script content
-                    "script.text = decodeURIComponent(escape(window.atob('" + encoded + "')));" +
-                    "document.documentElement.appendChild(script);" +
-                    "} else {" +
-                    // If the page is not in 'loading', force a reload
-                    "window.location.reload();" +
-                    "}";
-            webView.evaluateJavascript(script, null);
-        } catch (Exception e) {
-            e.printStackTrace();
+    /**
+     * Overrides onConfigurationChanged to adjust dialogs if necessary
+     * @param newConfig The new device configuration.
+     */
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ||
+                newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+
+            // Call your method to adjust the layout
+            if (promptDialog != null && promptDialog.isShowing()) {
+                adjustScrollConstraintHeight();
+            }
         }
     }
 

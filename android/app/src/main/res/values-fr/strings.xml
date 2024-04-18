@@ -14,4 +14,7 @@
     <string name="download_betterxcloud">Téléchargement de Better xCloud…</string>
     <string name="download_error">Une erreur s\'est produite pendant le téléchargement de Better xCloud</string>
     <string name="go_without_betterxcloud">Continuer sans Better xCloud</string>
+    <string name="betterxcloud_not_installed">Better xCloud n\'est pas installé</string>
+    <string name="betterxcloud_injection_error">Une erreur s\'est produite pendant l\'injection de Better xCloud</string>
+    <string name="betterxcloud_injection_retry">Nouvelle tentative d\'injection de Better xCloud</string>
 </resources>
