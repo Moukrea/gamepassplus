@@ -140,20 +140,38 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         String localVersion = prefs.getString("betterXcloudVersion", null);
 
-        String latestVersion = fetchLatestVersion();
-        boolean isNewVersionAvailable = latestVersion != null && !Objects.equals(localVersion, latestVersion);
-        // Check if script exists and if it's the latest version
-        if (!betterXcloudScript.exists() || localVersion == null || isNewVersionAvailable) {
+        if (!betterXcloudScript.exists() || localVersion == null) {
             showDialog(getString(R.string.installation),
                     R.drawable.download,
                     getString(R.string.download_betterxcloud),
                     "", null, "", null);
-
             downloadScript();
         } else {
-            runGamePass(true);
+            Thread fetchVersionThread = new Thread(() -> {
+                try {
+                    String latestVersion = fetchLatestVersion();
+                    runOnUiThread(() -> {
+                        if (latestVersion != null && isVersionNewer(localVersion, latestVersion)) {
+                            showDialog(getString(R.string.installation),
+                                    R.drawable.download,
+                                    getString(R.string.download_betterxcloud),
+                                    "", null, "", null);
+                            downloadScript();
+                        } else {
+                            runGamePass(true);
+                        }
+                    });
+                } catch (Exception e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Failed to fetch latest version", Toast.LENGTH_LONG).show();
+                        runGamePass(true);
+                    });
+                }
+            });
+            fetchVersionThread.start();
         }
     }
+
 
     /**
      * Downloads Better xCloud
@@ -250,25 +268,55 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Get latest Better xCloud version number from GitHub
-     * @return string
+     * Compares two semantic version strings.
+     *
+     * @param localVersion the current version installed locally.
+     * @param latestVersion the latest version available from GitHub.
+     * @return true if the latestVersion is greater than the localVersion.
+     */
+    private boolean isVersionNewer(String localVersion, String latestVersion) {
+        String[] localParts = localVersion.split("\\.");
+        String[] latestParts = latestVersion.split("\\.");
+        int length = Math.max(localParts.length, latestParts.length);
+        for (int i = 0; i < length; i++) {
+            int localPart = i < localParts.length ? Integer.parseInt(localParts[i]) : 0;
+            int latestPart = i < latestParts.length ? Integer.parseInt(latestParts[i]) : 0;
+            if (latestPart > localPart) {
+                return true;
+            } else if (latestPart < localPart) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Fetch the latest Better xCloud version number from GitHub.
+     *
+     * @return The latest version string or null if there is an error.
      */
     private String fetchLatestVersion() {
+        HttpURLConnection connection = null;
         try {
             URL url = new URL("https://api.github.com/repos/redphx/better-xcloud/releases/latest");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
                 String json = new Scanner(inputStream).useDelimiter("\\A").next();
                 JSONObject latestRelease = new JSONObject(json);
-                return latestRelease.getString("tag_name").substring(1);
+                return latestRelease.getString("tag_name").substring(1);  // Assuming tag_name is prefixed with 'v' (e.g., "v3.5.2")
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-        return null; // Default or error handling
+        return null;
     }
+
 
     /**
      * Loads Game Pass into WebView
