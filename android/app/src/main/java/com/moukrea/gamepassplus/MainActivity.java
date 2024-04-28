@@ -19,6 +19,7 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -32,8 +33,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
-import org.json.JSONObject;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,16 +42,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Scanner;
+
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
     private WebView GamePassWebView;
     private Dialog promptDialog;
     private boolean useBetterXcloud = false;
-    private boolean firstInjection = true;
+    private boolean readyForBetterXcloudInjection = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,13 +87,13 @@ public class MainActivity extends AppCompatActivity {
             View.OnClickListener secondaryButtonAction = view -> finish();
 
             showDialog(
-                titleText,
-                imageResource,
-                messageText,
-                primaryButtonText,
-                primaryButtonAction,
-                secondaryButtonText,
-                secondaryButtonAction
+                    titleText,
+                    imageResource,
+                    messageText,
+                    primaryButtonText,
+                    primaryButtonAction,
+                    secondaryButtonText,
+                    secondaryButtonAction
             );
         }
     }
@@ -118,13 +118,13 @@ public class MainActivity extends AppCompatActivity {
             };
 
             showDialog(
-                titleText,
-                0,
-                messageText,
-                primaryButtonText,
-                primaryButtonAction,
-                "",
-                null
+                    titleText,
+                    0,
+                    messageText,
+                    primaryButtonText,
+                    primaryButtonAction,
+                    "",
+                    null
             );
         }
     }
@@ -140,38 +140,20 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         String localVersion = prefs.getString("betterXcloudVersion", null);
 
-        if (!betterXcloudScript.exists() || localVersion == null) {
+        String latestVersion = fetchLatestVersion();
+        boolean isNewVersionAvailable = latestVersion != null && !Objects.equals(localVersion, latestVersion);
+        // Check if script exists and if it's the latest version
+        if (!betterXcloudScript.exists() || localVersion == null || isNewVersionAvailable) {
             showDialog(getString(R.string.installation),
                     R.drawable.download,
                     getString(R.string.download_betterxcloud),
                     "", null, "", null);
+
             downloadScript();
         } else {
-            Thread fetchVersionThread = new Thread(() -> {
-                try {
-                    String latestVersion = fetchLatestVersion();
-                    runOnUiThread(() -> {
-                        if (latestVersion != null && isVersionNewer(localVersion, latestVersion)) {
-                            showDialog(getString(R.string.installation),
-                                    R.drawable.download,
-                                    getString(R.string.download_betterxcloud),
-                                    "", null, "", null);
-                            downloadScript();
-                        } else {
-                            runGamePass(true);
-                        }
-                    });
-                } catch (Exception e) {
-                    runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Failed to fetch latest version", Toast.LENGTH_LONG).show();
-                        runGamePass(true);
-                    });
-                }
-            });
-            fetchVersionThread.start();
+            runGamePass(true);
         }
     }
-
 
     /**
      * Downloads Better xCloud
@@ -268,55 +250,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Compares two semantic version strings.
-     *
-     * @param localVersion the current version installed locally.
-     * @param latestVersion the latest version available from GitHub.
-     * @return true if the latestVersion is greater than the localVersion.
-     */
-    private boolean isVersionNewer(String localVersion, String latestVersion) {
-        String[] localParts = localVersion.split("\\.");
-        String[] latestParts = latestVersion.split("\\.");
-        int length = Math.max(localParts.length, latestParts.length);
-        for (int i = 0; i < length; i++) {
-            int localPart = i < localParts.length ? Integer.parseInt(localParts[i]) : 0;
-            int latestPart = i < latestParts.length ? Integer.parseInt(latestParts[i]) : 0;
-            if (latestPart > localPart) {
-                return true;
-            } else if (latestPart < localPart) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Fetch the latest Better xCloud version number from GitHub.
-     *
-     * @return The latest version string or null if there is an error.
+     * Get latest Better xCloud version number from GitHub
+     * @return string
      */
     private String fetchLatestVersion() {
-        HttpURLConnection connection = null;
         try {
             URL url = new URL("https://api.github.com/repos/redphx/better-xcloud/releases/latest");
-            connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
                 String json = new Scanner(inputStream).useDelimiter("\\A").next();
                 JSONObject latestRelease = new JSONObject(json);
-                return latestRelease.getString("tag_name").substring(1);  // Assuming tag_name is prefixed with 'v' (e.g., "v3.5.2")
+                return latestRelease.getString("tag_name").substring(1);
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
         }
-        return null;
+        return null; // Default or error handling
     }
-
 
     /**
      * Loads Game Pass into WebView
@@ -327,6 +279,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private void runGamePass(boolean useBetterXcloud) {
         this.useBetterXcloud = useBetterXcloud;
+        showDialog("",
+                R.drawable.xbox,
+                getString(R.string.please_wait),
+                "", null, "", null);
         GamePassWebView.loadUrl("https://www.xbox.com/play");
     }
 
@@ -362,71 +318,60 @@ public class MainActivity extends AppCompatActivity {
         GamePassWebView.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.gray));
 
         GamePassWebView.setWebViewClient(new WebViewClient() {
+            // shouldOverrideUrlLoading is deprecated
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return true;
+            }
+
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 if (MainActivity.this.useBetterXcloud) {
                     injectScript(view);
-                    if (!MainActivity.this.firstInjection) {
-                        Toast.makeText(MainActivity.this, getString(R.string.betterxcloud_injection_retry), Toast.LENGTH_SHORT).show();
-                    } else {
-                        MainActivity.this.firstInjection = false;
-                    }
                 }
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-
                 if (MainActivity.this.useBetterXcloud) {
-                    String checkScript = "if (document.getElementsByClassName('bx-toast').length == 0 " +
-                            "&& !document.querySelector('a[href*=\"/auth/msa?action=logIn\"]')" +
-                            "&& !window.location.pathname.includes('/auth/msa')" +
-                            "&& !window.location.search.includes('loggedIn')) {" +
-                            "   window.location.reload();" +
-                            "}";
-                    view.evaluateJavascript(checkScript, null);
+                    String loginLocationScript = "(function() { return window.location.pathname.includes('/auth/msa') })();";
+                    view.evaluateJavascript(loginLocationScript, value -> {
+                        if (!"true".equals(value)) {
+                            String userNotConnectedScript = "(function() { return document.querySelectorAll('a[href*=\\\"/auth/msa?action=logIn\\\"]').length > 0; })();";
+                            view.evaluateJavascript(userNotConnectedScript, value1 -> {
+                                if (!"true".equals(value1)) {
+                                    String gamepassLocationScript = "(function() {  return window.location.pathname.includes('/play') })();";
+                                    view.evaluateJavascript(gamepassLocationScript, value2 -> {
+                                        if ("true".equals(value2)) {
+                                            MainActivity.this.readyForBetterXcloudInjection = true;
+                                            String betterXcloudIsInjectedScript = "(function() { return document.getElementsByClassName('bx-toast').length > 0; })();";
+                                            view.evaluateJavascript(betterXcloudIsInjectedScript, value3 -> {
+                                                boolean betterXcloudIsInjected = "true".equals(value3);
+                                                if (!betterXcloudIsInjected) {
+                                                    String reloadScript = "window.location.reload();";
+                                                    view.evaluateJavascript(reloadScript, null);
+                                                } else {
+                                                    dismissDialog();
+                                                }
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    dismissDialog();
+                                }
+                            });
+                        } else {
+                            dismissDialog();
+                        }
+                    });
                 }
             }
+
         });
     }
-
-    private void injectScript(WebView webView) {
-        try {
-            File scriptFile = new File(getFilesDir(), "better-xcloud.user.js");
-            if (!scriptFile.exists()) {
-                Toast.makeText(MainActivity.this, getString(R.string.betterxcloud_not_installed), Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            InputStream inputStream = new FileInputStream(scriptFile);
-            byte[] buffer = new byte[inputStream.available()];
-            inputStream.read(buffer);
-            String scriptContent = new String(buffer, StandardCharsets.UTF_8);
-            inputStream.close();
-
-            String encodedScript = Base64.encodeToString(scriptContent.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
-
-            String script = "if (document.readyState === 'loading') {" +
-                    "    var parent = document.getElementsByTagName('head').item(0);" +
-                    "    var script = document.createElement('script');" +
-                    "    script.type = 'text/javascript';" +
-                    "    script.innerHTML = decodeURIComponent(escape(window.atob('" + encodedScript + "')));" +
-                    "    parent.appendChild(script);" +
-                    "} else {" +
-                    "    if (!window.location.pathname.includes('/auth/msa') && !window.location.search.includes('loggedIn')) {" +
-                    "        window.location.reload();" +
-                    "    }" +
-                    "}";
-
-            webView.evaluateJavascript(script, null);
-        } catch (Exception e) {
-            Toast.makeText(MainActivity.this, getString(R.string.betterxcloud_injection_error), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
 
     /**
      * Utility function to check if network is available
@@ -445,6 +390,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * Utility function to dismiss dialogs based on the common Dialog template
+     */
+    private void dismissDialog() {
+        if (promptDialog != null && promptDialog.isShowing()) {
+            promptDialog.dismiss();
+        }
+    }
+
+    /**
      * Allows Game Pass to be browsed with back button
      * Deprecated method
      */
@@ -460,6 +414,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Ensure UI Flags are consistent
      * @param hasFocus Whether the window of this activity has focus.
+     *
      */
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -473,6 +428,25 @@ public class MainActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_IMMERSIVE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+    }
+
+    /**
+     * Overrides onConfigurationChanged to adjust dialogs if necessary
+     * @param newConfig The new device configuration.
+     */
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ||
+                newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+
+            // Call your method to adjust the layout
+            if (promptDialog != null && promptDialog.isShowing()) {
+                adjustScrollConstraintHeight();
+            }
         }
     }
 
@@ -547,31 +521,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Utility function to dismiss dialogs based on the common Dialog template
-     */
-    private void dismissDialog() {
-        if (promptDialog != null && promptDialog.isShowing()) {
-            promptDialog.dismiss();
-        }
-    }
+    private void injectScript(WebView webView) {
+        try {
+            File scriptFile = new File(getFilesDir(), "better-xcloud.user.js");
+            InputStream inputStream = new FileInputStream(scriptFile);
+            byte[] buffer = new byte[inputStream.available()];
+            inputStream.read(buffer);
+            inputStream.close();
+            String encodedScript = Base64.encodeToString(buffer, Base64.NO_WRAP);
 
-    /**
-     * Overrides onConfigurationChanged to adjust dialogs if necessary
-     * @param newConfig The new device configuration.
-     */
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ||
-                newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-
-            // Call your method to adjust the layout
-            if (promptDialog != null && promptDialog.isShowing()) {
-                adjustScrollConstraintHeight();
-            }
+            String script = "if (" + readyForBetterXcloudInjection + "&& document.readyState === 'loading') {" +
+                    "var parent = document.getElementsByTagName('head')[0];" +
+                    "var script = document.createElement('script');" +
+                    "script.type = 'text/javascript';" +
+                    "script.innerHTML = decodeURIComponent(escape(window.atob('" + encodedScript + "')));" +
+                    "parent.appendChild(script);" +
+                    "}";
+            webView.evaluateJavascript(script, null);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

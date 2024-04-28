@@ -6,8 +6,8 @@ Multi-platform app to use Xbox Game Pass in its best possible way, leveraging th
 
 Most of the credits are to be given to [Better xCloud](https://github.com/redphx/better-xcloud) contributers an Microsoft themselves.
 
-> **Important note**:  
-> The folks over [Better xCloud](https://github.com/redphx/better-xcloud) have also an Android App on their own. It's different, but it serves the same purpose. Pick you poison!
+> [!IMPORTANT] 
+> [Better xCloud](https://github.com/redphx/better-xcloud) main developper ([redphx](https://github.com/redphx)) has also an released an Android App ([link](https://github.com/redphx/better-xcloud-android)). It's different, but it serves the same purpose. Pick you poison!
 
 ## Disclaimer
 
@@ -22,8 +22,10 @@ By using Game Pass Plus, you acknowledge the above statements and credit attribu
 
 - Android
 - Android TV
-- Linux, macOS, Windows (tba)
-- PWA (Android, Linux, macOS, Windows & iOS, tba)
+
+**To be announced (TBA)**:
+- Linux, macOS, Windows
+- PWA (Android, Linux, macOS, Windows & iOS)
 
 ## Features
 
@@ -32,41 +34,31 @@ By using Game Pass Plus, you acknowledge the above statements and credit attribu
 - [Better xCloud](https://github.com/redphx/better-xcloud) auto-update
 - UI tweaks so browsing feels more "console-like"
 
-## TODO
-
-### Interface
-
-- Controller/Remote friendlyness:
-  - [ ] Cookies pop-up
-  - [ ] Login page
-  - [ ] Game details media (Trailers and Screenshots) section
-- Bugfixes/Workarounds:
-  - [ ] [Hide video "posters"](https://stackoverflow.com/questions/18271991/html5-video-remove-overlay-play-icon) (Default video icon showing up for a second when a video/streaming is started)
-  - [ ] Automatically press the "Press to start streaming" button that shows up when a game is started (only happening within the app, this never shows up on browser)
-
 ## Known issues
 
 ### Some "web browsery" stuff still appear
 
-Yes, the app is based on the web version of [Games Pass](https://www.xbox.com/play), so web "browsery" stuff is to be expected. See the [TODO](#todo) section for what's planned regarding to these isssues
+Yes, the app is based on the web version of [Games Pass](https://www.xbox.com/play), so web "browsery" stuff is to be expected. We're working on it, but please feel free to repport any issues you may encounter!
 
 ## Installation
 
 ### Android / Android TV
 
-> Note: The `.apk` files are signed, but they're not (and won't ever) be available on the Google PlayStore. There's nothing shady in this app, but I doubt Microsoft would be happy to have a better app than their own on official distribution channels, plus I don't think its worth the hassle. F-Droid is envisageable though, depending on demand
+> [!NOTE]
+> The `.apk` file is not (and won't ever) be available on the Google Play. There's nothing shady in this app, but I doubt Microsoft would be happy to have a better app than their own on official distribution channels, plus I don't think its worth the hassle. F-Droid is envisageable though, depending on demand.
 
 #### Obtainium (automatic updates, recommended)
 
-[Obtainium](https://github.com/ImranR98/Obtainium) is an app allowing you to get apps updates directly from sources.
+[Obtainium](https://github.com/ImranR98/Obtainium) is an app allowing you to get app updates directly from sources.
 
 To add Game Pass Plus to Obtainium, simply start Obtainium, hit the `+` icon, add `https://github.com/Moukrea/gamepassplus` to the source URL field and hit the `Add` button. You'll then only have to install it through the application list within Obtainium.
 
 #### APK download (manual update)
 
+> [!IMPORTANT]
 > There won't be app update if you're using the manual installation
-> 
-Download the latest appropriate `.apk` file from the releases page for you device architecture (from here and nowhere else!). You can download it from the device itself or find your own way to send it there.
+
+Download the latest appropriate `.apk` file from the releases page (from here and nowhere else!). You can download it from the device itself or find your own way to send it there.
 
 Install the `.apk` file like you would install any side loaded application.
 
@@ -84,7 +76,7 @@ The app is built using Java, not Kotlin.
 
 #### Why is that?
 
-Simply because the nearly 1to1 implementation using Kotlin wasn't working, it has JavaScript/Video playback issues that I couldn't get sorted out. Making the switch to Java solved all my issues.
+Simply because the nearly 1to1 implementation using Kotlin wasn't working, it had JavaScript/Video playback issues that I couldn't get sorted out. Making the switch to Java solved all my issues.
 
 #### It uses deprecated stuff!
 

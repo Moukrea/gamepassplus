@@ -14,7 +14,5 @@
     <string name="download_betterxcloud">Downloading Better xCloud…</string>
     <string name="download_error">Something wrong occurred while downloading Better xCloud</string>
     <string name="go_without_betterxcloud">Continue without Better xCloud</string>
-    <string name="betterxcloud_not_installed">Better xCloud is not installed</string>
-    <string name="betterxcloud_injection_error">An error occured while injecting Better xCloud</string>
-    <string name="betterxcloud_injection_retry">Retrying Better xCloud Injection</string>
+    <string name="please_wait">Please wait…</string>
 </resources>
